@@ -83,7 +83,7 @@ backend-proy2-progra4/
 1. Clonar el repositorio:
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
+git clone https://github.com/Danny019283/hotel
 cd backend-proy2-progra4
 ```
 
