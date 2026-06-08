@@ -5,6 +5,7 @@ from domain.bussiness_rules.booking_rules import BookingRules
 from domain.entities.booking import Booking
 from domain.exeptions import DomainError
 from infrastructure.repositories.booking_repo import Booking_repo
+from infrastructure.repositories.bill_repo import Bill_repo
 from infrastructure.repositories.client_repo import Client_repo
 from infrastructure.repositories.room_repo import Room_repo
 
@@ -15,10 +16,12 @@ class BookingCases:
         booking_repo: Booking_repo | None = None,
         client_repo: Client_repo | None = None,
         room_repo: Room_repo | None = None,
+        bill_repo: Bill_repo | None = None,
     ):
         self.booking_repo = booking_repo or Booking_repo()
         self.client_repo = client_repo or Client_repo()
         self.room_repo = room_repo or Room_repo()
+        self.bill_repo = bill_repo or Bill_repo()
 
     def _validate_room_overlaps(
         self,
@@ -97,7 +100,9 @@ class BookingCases:
             check_in,
             check_out,
         )
-        BookingRules.validate_booking(booking)
+        BookingRules.validate_check_in_before_check_out(check_in, check_out)
+        BookingRules.validate_minimum_stay(check_in, check_out)
+        BookingRules.validate_not_in_past(check_in)
         self._validate_room_overlaps(
             [room.room_number for room in existing_booking.rooms],
             check_in,
@@ -145,3 +150,10 @@ class BookingCases:
             )
             for booking in (self.booking_repo.get_all() or [])
         ]
+
+    def delete_booking(self, booking_id: int) -> None:
+        if self.booking_repo.get_by_id(booking_id) is None:
+            raise DomainError("booking not found")
+        if self.bill_repo.get_by_booking_id(booking_id) is not None:
+            raise DomainError("cannot delete a booking that already has a bill")
+        self.booking_repo.delete(booking_id)

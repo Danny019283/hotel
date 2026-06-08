@@ -120,5 +120,6 @@ class Booking_repo(IRespository[Booking]):
                 )
                 for booking_room in booking_rooms:
                     session.delete(booking_room)
+                session.flush()
                 session.delete(booking)
                 session.commit()

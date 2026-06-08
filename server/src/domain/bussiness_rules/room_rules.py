@@ -3,6 +3,8 @@ from src.domain.exeptions import RoomAvailabilityError, RoomPriceError, RoomType
 
 
 class RoomRules:
+    ALLOWED_ROOM_TYPES = {"Suite", "Doble", "Individual"}
+
     @staticmethod
     def validate_available(room: Room) -> None:
         if not room.available:
@@ -15,8 +17,8 @@ class RoomRules:
 
     @staticmethod
     def validate_room_type(room: Room) -> None:
-        if not room.room_type.strip():
-            raise RoomTypeError("room_type cannot be empty")
+        if room.room_type not in RoomRules.ALLOWED_ROOM_TYPES:
+            raise RoomTypeError("room_type must be Suite, Doble or Individual")
 
     @staticmethod
     def validate_room(room: Room) -> None:

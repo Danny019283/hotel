@@ -13,6 +13,7 @@ if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
 from api.routes import api_router
+from application.bootstrap import seed_initial_data
 from domain.exeptions import DomainError, MappingError, ValidationError
 from infrastructure.database.connection import create_db_and_tables
 
@@ -24,6 +25,7 @@ def _get_allowed_origins() -> list[str]:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
+    seed_initial_data()
     yield
 
 

@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from api.security import AuthenticatedUser, get_current_user, require_admin
 from application.dtos.room_dto import ChangeRoomStatusDTO, CreateRoomDTO, RoomResponseDTO, UpdateRoomDTO
 from application.uses_cases.room_cases import RoomCases
 from domain.exeptions import DomainError
@@ -10,7 +11,7 @@ room_cases = RoomCases()
 
 
 @router.post("", response_model=RoomResponseDTO, status_code=status.HTTP_201_CREATED)
-def register_room(dto: CreateRoomDTO):
+def register_room(dto: CreateRoomDTO, _: AuthenticatedUser = Depends(require_admin)):
     try:
         return room_cases.register_room_dto(dto)
     except DomainError as exc:
@@ -18,7 +19,7 @@ def register_room(dto: CreateRoomDTO):
 
 
 @router.get("/{room_number}", response_model=RoomResponseDTO)
-def consult_room(room_number: int):
+def consult_room(room_number: int, _: AuthenticatedUser = Depends(get_current_user)):
     room = room_cases.consult_room_dto(room_number)
     if room is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="room not found")
@@ -26,7 +27,7 @@ def consult_room(room_number: int):
 
 
 @router.put("/{room_number}", response_model=RoomResponseDTO)
-def update_room(room_number: int, dto: UpdateRoomDTO):
+def update_room(room_number: int, dto: UpdateRoomDTO, _: AuthenticatedUser = Depends(require_admin)):
     try:
         return room_cases.update_room_dto(room_number, dto)
     except DomainError as exc:
@@ -34,7 +35,11 @@ def update_room(room_number: int, dto: UpdateRoomDTO):
 
 
 @router.patch("/{room_number}/status", response_model=RoomResponseDTO)
-def change_room_status(room_number: int, dto: ChangeRoomStatusDTO):
+def change_room_status(
+    room_number: int,
+    dto: ChangeRoomStatusDTO,
+    _: AuthenticatedUser = Depends(require_admin),
+):
     try:
         return room_cases.change_room_status_dto(room_number, dto)
     except DomainError as exc:
@@ -42,7 +47,18 @@ def change_room_status(room_number: int, dto: ChangeRoomStatusDTO):
 
 
 @router.get("", response_model=list[RoomResponseDTO])
-def list_rooms(available: bool | None = Query(default=None)):
+def list_rooms(
+    available: bool | None = Query(default=None),
+    _: AuthenticatedUser = Depends(get_current_user),
+):
     if available is True:
         return room_cases.consult_available_rooms_dto()
     return room_cases.list_rooms_dto()
+
+
+@router.delete("/{room_number}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_room(room_number: int, _: AuthenticatedUser = Depends(require_admin)):
+    try:
+        room_cases.delete_room(room_number)
+    except DomainError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

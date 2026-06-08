@@ -6,6 +6,10 @@ class CreateBillDTO(BaseModel):
     payment_method_id: int = Field(gt=0, description="Payment method identifier", examples=[2])
 
 
+class UpdateBillPaymentMethodDTO(BaseModel):
+    payment_method_id: int = Field(gt=0, description="Updated payment method identifier", examples=[2])
+
+
 class BillResponseDTO(BaseModel):
     bill_id: int = Field(description="Generated bill identifier", examples=[1])
     booking_id: int = Field(description="Related booking identifier", examples=[1])

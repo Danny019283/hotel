@@ -1,6 +1,7 @@
 from bcrypt import checkpw, gensalt, hashpw
 
-from application.dtos.user_dto import AuthResponseDTO, ChangePasswordDTO, LoginDTO, RegisterUserDTO, UserResponseDTO
+from application.dtos.user_dto import AuthResponseDTO, ChangePasswordDTO, LoginDTO, RegisterUserDTO, UpdateUserRoleDTO, UserResponseDTO
+from api.security import create_access_token
 from domain.bussiness_rules.user_rules import UserRules
 from domain.entities.user import User
 from domain.exeptions import DomainError
@@ -36,7 +37,14 @@ class UserCases:
 
     def login_dto(self, dto: LoginDTO) -> AuthResponseDTO:
         user = self.login(dto.username, dto.password)
-        return AuthResponseDTO(username=user.username, role=user.role, message="login successful")
+        access_token, expires_in = create_access_token(user.username, user.role)
+        return AuthResponseDTO(
+            username=user.username,
+            role=user.role,
+            message="login successful",
+            access_token=access_token,
+            expires_in=expires_in,
+        )
 
     def change_password(self, username: str, current_password: str, new_password: str) -> User:
         user = self.user_repo.get_by_id(username)
@@ -58,3 +66,34 @@ class UserCases:
     def change_password_dto(self, dto: ChangePasswordDTO) -> UserResponseDTO:
         user = self.change_password(dto.username, dto.current_password, dto.new_password)
         return UserResponseDTO(username=user.username, role=user.role)
+
+    def list_users_dto(self) -> list[UserResponseDTO]:
+        return [
+            UserResponseDTO(username=user.username, role=user.role)
+            for user in (self.user_repo.get_all() or [])
+        ]
+
+    def update_role_dto(self, username: str, dto: UpdateUserRoleDTO) -> UserResponseDTO:
+        user = self.user_repo.get_by_id(username)
+        if user is None:
+            raise DomainError("user not found")
+
+        if user.role == "ADMIN" and dto.role != "ADMIN":
+            admins = [item for item in (self.user_repo.get_all() or []) if item.role == "ADMIN"]
+            if len(admins) <= 1:
+                raise DomainError("cannot change the role of the last administrator")
+
+        updated_user = User(username=user.username, password_hash=user.password_hash, role=dto.role)
+        UserRules.validate_user(updated_user)
+        self.user_repo.update(updated_user)
+        return UserResponseDTO(username=updated_user.username, role=updated_user.role)
+
+    def delete_user(self, username: str) -> None:
+        user = self.user_repo.get_by_id(username)
+        if user is None:
+            raise DomainError("user not found")
+        if user.role == "ADMIN":
+            admins = [item for item in (self.user_repo.get_all() or []) if item.role == "ADMIN"]
+            if len(admins) <= 1:
+                raise DomainError("cannot delete the last administrator")
+        self.user_repo.delete(username)

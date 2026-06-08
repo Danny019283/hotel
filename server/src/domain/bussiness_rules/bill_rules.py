@@ -19,7 +19,6 @@ class BillRules:
     @staticmethod
     def validate_bill(bill: Bill) -> None:
         BillRules.validate_total(bill.total)
-        BookingRules.validate_booking(bill.booking)
         PaymentMethodRules.validate_payment_method(bill.payment_method)
         BillRules.validate_total_matches_booking(bill)
 

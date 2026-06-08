@@ -29,3 +29,10 @@ class AuthResponseDTO(BaseModel):
     username: str = Field(description="Unique username", examples=["admin01"])
     role: Literal["ADMIN", "EMPLOYEE"] = Field(description="User role")
     message: str = Field(description="Authentication result message", examples=["login successful"])
+    access_token: str = Field(description="Bearer access token")
+    token_type: Literal["bearer"] = Field(default="bearer")
+    expires_in: int = Field(gt=0, description="Token lifetime in seconds")
+
+
+class UpdateUserRoleDTO(BaseModel):
+    role: Literal["ADMIN", "EMPLOYEE"] = Field(description="Updated user role")

@@ -102,3 +102,8 @@ class RoomCases:
             )
             for room in rooms
         ]
+
+    def delete_room(self, room_number: int) -> None:
+        if self.room_repo.get_by_id(room_number) is None:
+            raise DomainError("room not found")
+        self.room_repo.delete(room_number)
