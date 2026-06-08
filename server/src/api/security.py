@@ -67,7 +67,7 @@ def get_current_user(
         if int(payload["exp"]) < int(time.time()):
             raise unauthorized
 
-        user = User_repo().get_by_id(str(payload["sub"]))
+        user = User_repo().get_by_username(str(payload["sub"]))
         if user is None:
             raise unauthorized
         return AuthenticatedUser(username=user.username, role=user.role)

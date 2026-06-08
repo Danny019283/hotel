@@ -10,6 +10,7 @@ from infrastructure.models.booking import Booking_model
 from infrastructure.models.client_model import Client_model
 from infrastructure.models.payment_method_model import Payment_Method_Model
 from infrastructure.models.room_model import Room_model
+from infrastructure.models.room_type_model import Room_Type_model
 from infrastructure.models.user_model import User_model
 
 
@@ -46,6 +47,8 @@ PASSWORD = _require_env("DB_PASSWORD")
 DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 17 for SQL Server").strip()
 TRUST_SERVER_CERTIFICATE = os.getenv("DB_TRUST_SERVER_CERTIFICATE", "yes").strip()
 DB_ECHO = os.getenv("DB_ECHO", "false").strip().lower() == "true"
+DB_RESET_ON_START = os.getenv("DB_RESET_ON_START", "false").strip().lower() == "true"
+RESET_MARKER_PATH = Path(__file__).resolve().parents[3] / ".db_schema_reset_done"
 
 connection_string = (
     f"DRIVER={{{DRIVER}}};"
@@ -63,5 +66,8 @@ engine = create_engine(connection_url, echo=DB_ECHO)
 
 
 def create_db_and_tables():
-    print(SQLModel.metadata.tables.keys())
+    if DB_RESET_ON_START and not RESET_MARKER_PATH.exists():
+        SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
+    if DB_RESET_ON_START and not RESET_MARKER_PATH.exists():
+        RESET_MARKER_PATH.write_text("schema reset completed\n", encoding="utf-8")

@@ -48,7 +48,7 @@ class BillCases:
             bill_id=bill.bill_id,
             booking_id=bill.booking.booking_id,
             payment_method_id=bill.payment_method.payment_method_id,
-            total=bill.total,
+            total=float(bill.total),
         )
 
     def create_bill(self, booking_id: int, payment_method_id: int) -> Bill:
@@ -68,7 +68,7 @@ class BillCases:
             bill_id=bill.bill_id,
             booking_id=bill.booking.booking_id,
             payment_method_id=bill.payment_method.payment_method_id,
-            total=bill.total,
+            total=float(bill.total),
         )
 
     def consult_bill_by_booking(self, booking_id: int) -> Bill | None:
@@ -82,7 +82,7 @@ class BillCases:
             bill_id=bill.bill_id,
             booking_id=bill.booking.booking_id,
             payment_method_id=bill.payment_method.payment_method_id,
-            total=bill.total,
+            total=float(bill.total),
         )
 
     def bill_summary_dto(self, bill_id: int) -> BillSummaryDTO | None:
@@ -94,8 +94,9 @@ class BillCases:
             booking_id=bill.booking.booking_id,
             client_id=bill.booking.client.client_id,
             room_numbers=[room.room_number for room in bill.booking.rooms],
+            room_types=[room.room_type_name for room in bill.booking.rooms],
             payment_method_id=bill.payment_method.payment_method_id,
-            total=bill.total,
+            total=float(bill.total),
         )
 
     def list_bills_dto(self) -> list[BillResponseDTO]:
@@ -104,7 +105,7 @@ class BillCases:
                 bill_id=bill.bill_id,
                 booking_id=bill.booking.booking_id,
                 payment_method_id=bill.payment_method.payment_method_id,
-                total=bill.total,
+                total=float(bill.total),
             )
             for bill in (self.bill_repo.get_all() or [])
         ]
@@ -134,7 +135,7 @@ class BillCases:
             bill_id=updated_bill.bill_id,
             booking_id=updated_bill.booking.booking_id,
             payment_method_id=updated_bill.payment_method.payment_method_id,
-            total=updated_bill.total,
+            total=float(updated_bill.total),
         )
 
     def delete_bill(self, bill_id: int) -> None:

@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Pagos from "./pages/Pagos";
 import Reportes from "./pages/Reportes";
 import Reservas from "./pages/Reservas";
+import TiposHabitacion from "./pages/TiposHabitacion";
 import Usuarios from "./pages/Usuarios";
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route path="/reportes" element={<Reportes />} />
 
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+            <Route path="/tipos-habitacion" element={<TiposHabitacion />} />
             <Route path="/usuarios" element={<Usuarios />} />
           </Route>
         </Route>

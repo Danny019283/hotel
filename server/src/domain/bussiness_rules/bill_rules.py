@@ -13,7 +13,7 @@ class BillRules:
     @staticmethod
     def validate_total_matches_booking(bill: Bill) -> None:
         expected_total = BookingRules.calculate_booking_total(bill.booking)
-        if float(bill.total) != float(expected_total):
+        if bill.total != expected_total:
             raise BillTotalMismatchError("bill total does not match booking total")
 
     @staticmethod

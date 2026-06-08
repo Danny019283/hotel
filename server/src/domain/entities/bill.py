@@ -1,9 +1,11 @@
+from decimal import Decimal
+
 from domain.entities.booking import Booking
 from domain.entities.payment_method import Payment_Method
 
 
 class Bill:
-    def __init__(self, bill_id: int | None, booking: Booking, payment_method: Payment_Method, total: float):
+    def __init__(self, bill_id: int | None, booking: Booking, payment_method: Payment_Method, total):
         self.bill_id = bill_id
         self.booking = booking
         self.payment_method = payment_method
@@ -45,13 +47,12 @@ class Bill:
         self.__payment_method = value
 
     @property
-    def total(self) -> float:
+    def total(self) -> Decimal:
         return self.__total
 
     @total.setter
-    def total(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError("total must be a number")
-        if value < 0:
+    def total(self, value):
+        total = Decimal(value)
+        if total < 0:
             raise ValueError("total cannot be negative")
-        self.__total = float(value)
+        self.__total = total.quantize(Decimal("0.01"))

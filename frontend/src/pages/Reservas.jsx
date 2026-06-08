@@ -219,7 +219,7 @@ function Reservas() {
                   .filter((room) => room.available || form.room_numbers.includes(room.room_number))
                   .map((room) => (
                     <option key={room.room_number} value={room.room_number}>
-                      #{room.room_number} - {room.room_type}
+                      #{room.room_number} - {room.room_type_name}
                     </option>
                   ))}
               </select>

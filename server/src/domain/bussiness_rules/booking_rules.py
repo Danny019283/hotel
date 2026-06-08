@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import date
 
 from src.domain.entities.booking import Booking
@@ -46,12 +47,13 @@ class BookingRules:
     @staticmethod
     def calculate_room_subtotal(room, check_in: date, check_out: date) -> float:
         nights = BookingRules.calculate_nights(check_in, check_out)
-        return float(room.price) * nights
+        return room.base_price * Decimal(nights)
 
     @staticmethod
     def calculate_booking_total(booking: Booking) -> float:
         nights = BookingRules.calculate_nights(booking.check_in, booking.check_out)
-        return sum(float(room.price) for room in booking.rooms) * nights
+        total = sum((room.base_price for room in booking.rooms), Decimal("0.00"))
+        return total * Decimal(nights)
 
     @staticmethod
     def validate_booking(booking: Booking) -> None:

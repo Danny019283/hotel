@@ -13,20 +13,20 @@ class UserCases:
         self.user_repo = user_repo or User_repo()
 
     def register_user(self, username: str, password: str, role: str) -> User:
-        if self.user_repo.get_by_id(username) is not None:
+        if self.user_repo.get_by_username(username) is not None:
             raise DomainError("user already exists")
 
-        user = User(username=username, password_hash=hashpw(password.encode("utf-8"), gensalt()), role=role)
+        user = User(user_id=None, username=username, password_hash=hashpw(password.encode("utf-8"), gensalt()), role=role)
         UserRules.validate_user(user)
         self.user_repo.add(user)
         return user
 
     def register_user_dto(self, dto: RegisterUserDTO) -> UserResponseDTO:
         user = self.register_user(dto.username, dto.password, dto.role)
-        return UserResponseDTO(username=user.username, role=user.role)
+        return UserResponseDTO(user_id=user.user_id, username=user.username, role=user.role)
 
     def login(self, username: str, password: str) -> User:
-        user = self.user_repo.get_by_id(username)
+        user = self.user_repo.get_by_username(username)
         if user is None:
             raise DomainError("invalid credentials")
 
@@ -47,7 +47,7 @@ class UserCases:
         )
 
     def change_password(self, username: str, current_password: str, new_password: str) -> User:
-        user = self.user_repo.get_by_id(username)
+        user = self.user_repo.get_by_username(username)
         if user is None:
             raise DomainError("user not found")
 
@@ -55,6 +55,7 @@ class UserCases:
             raise DomainError("invalid credentials")
 
         updated_user = User(
+            user_id=user.user_id,
             username=user.username,
             password_hash=hashpw(new_password.encode("utf-8"), gensalt()),
             role=user.role,
@@ -65,16 +66,16 @@ class UserCases:
 
     def change_password_dto(self, dto: ChangePasswordDTO) -> UserResponseDTO:
         user = self.change_password(dto.username, dto.current_password, dto.new_password)
-        return UserResponseDTO(username=user.username, role=user.role)
+        return UserResponseDTO(user_id=user.user_id, username=user.username, role=user.role)
 
     def list_users_dto(self) -> list[UserResponseDTO]:
         return [
-            UserResponseDTO(username=user.username, role=user.role)
+            UserResponseDTO(user_id=user.user_id, username=user.username, role=user.role)
             for user in (self.user_repo.get_all() or [])
         ]
 
     def update_role_dto(self, username: str, dto: UpdateUserRoleDTO) -> UserResponseDTO:
-        user = self.user_repo.get_by_id(username)
+        user = self.user_repo.get_by_username(username)
         if user is None:
             raise DomainError("user not found")
 
@@ -83,17 +84,17 @@ class UserCases:
             if len(admins) <= 1:
                 raise DomainError("cannot change the role of the last administrator")
 
-        updated_user = User(username=user.username, password_hash=user.password_hash, role=dto.role)
+        updated_user = User(user_id=user.user_id, username=user.username, password_hash=user.password_hash, role=dto.role)
         UserRules.validate_user(updated_user)
         self.user_repo.update(updated_user)
-        return UserResponseDTO(username=updated_user.username, role=updated_user.role)
+        return UserResponseDTO(user_id=updated_user.user_id, username=updated_user.username, role=updated_user.role)
 
     def delete_user(self, username: str) -> None:
-        user = self.user_repo.get_by_id(username)
+        user = self.user_repo.get_by_username(username)
         if user is None:
             raise DomainError("user not found")
         if user.role == "ADMIN":
             admins = [item for item in (self.user_repo.get_all() or []) if item.role == "ADMIN"]
             if len(admins) <= 1:
                 raise DomainError("cannot delete the last administrator")
-        self.user_repo.delete(username)
+        self.user_repo.delete(user.user_id)

@@ -1,19 +1,23 @@
+from decimal import Decimal
+
 from sqlmodel import Session, select
 
 from domain.bussiness_rules.booking_rules import BookingRules
-from domain.exeptions import MappingError
 from domain.entities.bill import Bill
 from domain.entities.booking import Booking
 from domain.entities.client import Client
 from domain.entities.payment_method import Payment_Method
 from domain.entities.room import Room
+from domain.entities.room_type import RoomType
 from domain.entities.user import User
+from domain.exeptions import MappingError
 from infrastructure.models.bill_model import Bill_model
 from infrastructure.models.booking import Booking_model
 from infrastructure.models.booking_room_model import Booking_Room_model
 from infrastructure.models.client_model import Client_model
 from infrastructure.models.payment_method_model import Payment_Method_Model
 from infrastructure.models.room_model import Room_model
+from infrastructure.models.room_type_model import Room_Type_model
 from infrastructure.models.user_model import User_model
 
 
@@ -39,11 +43,45 @@ class MapperModel:
         )
 
     @staticmethod
-    def room_model_to_entity(model: Room_model) -> Room:
+    def room_type_model_to_entity(model: Room_Type_model) -> RoomType:
+        return RoomType(
+            room_type_id=model.room_type_id,
+            name=model.name,
+            description=model.description,
+            capacity=model.capacity,
+            base_price=model.base_price,
+            active=model.active,
+        )
+
+    @staticmethod
+    def room_type_entity_to_model(entity: RoomType) -> Room_Type_model:
+        return Room_Type_model(
+            room_type_id=entity.room_type_id,
+            name=entity.name,
+            description=entity.description,
+            capacity=entity.capacity,
+            base_price=entity.base_price,
+            active=entity.active,
+        )
+
+    @staticmethod
+    def room_model_to_entity(
+        session: Session,
+        model: Room_model,
+        *,
+        booked_price: Decimal | None = None,
+    ) -> Room:
+        room_type_model = session.get(Room_Type_model, model.room_type_id)
+        if room_type_model is None:
+            raise MappingError(f"Room type {model.room_type_id} not found for room {model.room_number}")
         return Room(
             room_number=model.room_number,
-            room_type=model.room_type,
-            price=model.price,
+            room_type_id=room_type_model.room_type_id,
+            room_type_name=room_type_model.name,
+            room_type_description=room_type_model.description,
+            capacity=room_type_model.capacity,
+            base_price=booked_price if booked_price is not None else room_type_model.base_price,
+            room_type_active=room_type_model.active,
             available=model.available,
         )
 
@@ -51,8 +89,7 @@ class MapperModel:
     def room_entity_to_model(entity: Room) -> Room_model:
         return Room_model(
             room_number=entity.room_number,
-            room_type=entity.room_type,
-            price=entity.price,
+            room_type_id=entity.room_type_id,
             available=entity.available,
         )
 
@@ -85,7 +122,13 @@ class MapperModel:
             room_model = session.get(Room_model, booking_room.room_number)
             if room_model is None:
                 raise MappingError(f"Room {booking_room.room_number} not found for booking {booking_id}")
-            rooms.append(MapperModel.room_model_to_entity(room_model))
+            rooms.append(
+                MapperModel.room_model_to_entity(
+                    session,
+                    room_model,
+                    booked_price=booking_room.price_per_night,
+                )
+            )
 
         return rooms
 
@@ -123,7 +166,7 @@ class MapperModel:
                 Booking_Room_model(
                     booking_id=entity.booking_id,
                     room_number=room.room_number,
-                    price_per_night=room.price,
+                    price_per_night=room.base_price,
                     subtotal=BookingRules.calculate_room_subtotal(room, entity.check_in, entity.check_out),
                 )
             )
@@ -164,6 +207,7 @@ class MapperModel:
     @staticmethod
     def user_model_to_entity(model: User_model) -> User:
         return User(
+            user_id=model.user_id,
             username=model.username,
             password_hash=model.password_hash,
             role=model.role,
@@ -172,6 +216,7 @@ class MapperModel:
     @staticmethod
     def user_entity_to_model(entity: User) -> User_model:
         return User_model(
+            user_id=entity.user_id,
             username=entity.username,
             password_hash=entity.password_hash,
             role=entity.role,

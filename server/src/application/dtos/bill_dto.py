@@ -22,5 +22,6 @@ class BillSummaryDTO(BaseModel):
     booking_id: int = Field(description="Booking identifier", examples=[1])
     client_id: str = Field(description="Client identifier", examples=["C001"])
     room_numbers: list[int] = Field(description="Billed room numbers", examples=[[101, 102]])
+    room_types: list[str] = Field(description="Billed room types", examples=[["Doble", "Suite"]])
     payment_method_id: int = Field(description="Payment method identifier", examples=[2])
     total: float = Field(ge=0, description="Total bill amount", examples=[240.0])

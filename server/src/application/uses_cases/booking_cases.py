@@ -55,6 +55,8 @@ class BookingCases:
             room = self.room_repo.get_by_id(room_number)
             if room is None:
                 raise DomainError(f"room {room_number} not found")
+            if not room.room_type_active:
+                raise DomainError(f"room {room_number} has an inactive room type")
             rooms.append(room)
 
         booking = Booking(None, client, rooms, check_in, check_out)
@@ -131,7 +133,7 @@ class BookingCases:
             BookingHistoryItemDTO(
                 booking_id=booking.booking_id,
                 room_numbers=[room.room_number for room in booking.rooms],
-                room_types=[room.room_type for room in booking.rooms],
+                room_types=[room.room_type_name for room in booking.rooms],
                 check_in=booking.check_in,
                 check_out=booking.check_out,
                 total_days=(booking.check_out - booking.check_in).days,

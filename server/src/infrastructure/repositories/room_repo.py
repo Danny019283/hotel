@@ -25,13 +25,13 @@ class Room_repo(IRespository[Room]):
     def get_by_id(self, id: int) -> Room | None:
         with Session(engine) as session:
             room = session.get(Room_model, id)
-            return MapperModel.room_model_to_entity(room) if room else None
+            return MapperModel.room_model_to_entity(session, room) if room else None
 
     def get_all(self) -> list[Room] | None:
         with Session(engine) as session:
             statement = select(Room_model)
             rooms = session.exec(statement).all()
-            return [MapperModel.room_model_to_entity(room) for room in rooms]
+            return [MapperModel.room_model_to_entity(session, room) for room in rooms]
 
     def delete(self, id: int) -> None:
         with Session(engine) as session:

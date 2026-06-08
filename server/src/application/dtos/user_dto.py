@@ -21,6 +21,7 @@ class ChangePasswordDTO(BaseModel):
 
 
 class UserResponseDTO(BaseModel):
+    user_id: int = Field(description="Internal user identifier", examples=[1])
     username: str = Field(description="Unique username", examples=["admin01"])
     role: Literal["ADMIN", "EMPLOYEE"] = Field(description="User role")
 

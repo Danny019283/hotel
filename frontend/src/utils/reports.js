@@ -26,7 +26,7 @@ export const buildRoomStatus = (rooms) => [
 ];
 
 export const buildBookingsByRoomType = (bookings, rooms) => {
-  const roomTypes = new Map(rooms.map((room) => [room.room_number, room.room_type]));
+  const roomTypes = new Map(rooms.map((room) => [room.room_number, room.room_type_name]));
   const grouped = {};
 
   bookings.forEach((booking) => {

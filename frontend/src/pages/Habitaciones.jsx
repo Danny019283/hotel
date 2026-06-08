@@ -7,6 +7,7 @@ import {
   updateHabitacion,
 } from "../api/habitaciones.api";
 import { getApiError } from "../api/axiosConfig";
+import { getTiposHabitacion } from "../api/tiposHabitacion.api";
 import DataTable from "../components/DataTable";
 import { Alert, LoadingState } from "../components/Feedback";
 import Modal from "../components/Modal";
@@ -16,17 +17,15 @@ import { formatCurrency } from "../utils/formatters";
 
 const initialForm = {
   room_number: "",
-  room_type: "",
-  price: "",
+  room_type_id: "",
   available: true,
 };
-
-const roomTypeOptions = ["Suite", "Doble", "Individual"];
 
 function Habitaciones() {
   const user = getSession();
   const canManage = isAdminRole(user.role);
   const [rooms, setRooms] = useState([]);
+  const [roomTypes, setRoomTypes] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [editing, setEditing] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,7 +36,9 @@ function Habitaciones() {
   const loadRooms = async () => {
     try {
       setLoading(true);
-      setRooms(await getHabitaciones());
+      const [roomData, roomTypeData] = await Promise.all([getHabitaciones(), getTiposHabitacion()]);
+      setRooms(roomData);
+      setRoomTypes(roomTypeData);
     } catch (error) {
       setFeedback({ type: "error", message: getApiError(error) });
     } finally {
@@ -60,7 +61,7 @@ function Habitaciones() {
     setForm({
       ...room,
       room_number: String(room.room_number),
-      price: String(room.price),
+      room_type_id: String(room.room_type_id),
     });
     setModalOpen(true);
   };
@@ -68,8 +69,8 @@ function Habitaciones() {
   const submit = async (event) => {
     event.preventDefault();
     setFeedback({ type: "", message: "" });
-    if (!roomTypeOptions.includes(form.room_type) || Number(form.price) <= 0 || Number(form.room_number) <= 0) {
-      setFeedback({ type: "error", message: "Completa los campos, selecciona un tipo valido y usa un precio mayor a cero." });
+    if (Number(form.room_type_id) <= 0 || Number(form.room_number) <= 0) {
+      setFeedback({ type: "error", message: "Completa los campos y selecciona un tipo de habitacion valido." });
       return;
     }
 
@@ -77,14 +78,12 @@ function Habitaciones() {
       setSaving(true);
       if (editing) {
         await updateHabitacion(editing, {
-          room_type: form.room_type,
-          price: Number(form.price),
+          room_type_id: Number(form.room_type_id),
         });
       } else {
         await createHabitacion({
           room_number: Number(form.room_number),
-          room_type: form.room_type,
-          price: Number(form.price),
+          room_type_id: Number(form.room_type_id),
           available: true,
         });
       }
@@ -121,11 +120,21 @@ function Habitaciones() {
 
   const columns = [
     { key: "room_number", label: "Numero" },
-    { key: "room_type", label: "Tipo" },
-    { key: "price", label: "Precio / noche", render: (room) => formatCurrency(room.price) },
+    { key: "room_type_name", label: "Tipo" },
+    { key: "capacity", label: "Capacidad" },
+    { key: "base_price", label: "Precio / noche", render: (room) => formatCurrency(room.base_price) },
+    {
+      key: "room_type_active",
+      label: "Tipo activo",
+      render: (room) => (
+        <span className={`badge ${room.room_type_active ? "badge-success" : "badge-muted"}`}>
+          {room.room_type_active ? "Activo" : "Inactivo"}
+        </span>
+      ),
+    },
     {
       key: "available",
-      label: "Estado",
+      label: "Habitacion",
       render: (room) => (
         <span className={`badge ${room.available ? "badge-success" : "badge-muted"}`}>
           {room.available ? "Disponible" : "No disponible"}
@@ -157,7 +166,7 @@ function Habitaciones() {
       <PageHeader
         eyebrow="Inventario"
         title="Habitaciones"
-        description="Administra tipos, tarifas y disponibilidad del hotel."
+        description="Administra habitaciones enlazadas a tipos, tarifas y capacidades del hotel."
         action={canManage && <button className="button button-primary" onClick={openCreate}>+ Nueva habitacion</button>}
       />
       <Alert type={feedback.type}>{feedback.message}</Alert>
@@ -185,31 +194,23 @@ function Habitaciones() {
             <label>
               Tipo
               <select
-                value={form.room_type}
-                onChange={(event) => setForm({ ...form, room_type: event.target.value })}
+                value={form.room_type_id}
+                onChange={(event) => setForm({ ...form, room_type_id: event.target.value })}
                 required
               >
                 <option value="">Seleccione un tipo</option>
-                {roomTypeOptions.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
+                {roomTypes
+                  .filter((type) => type.active || String(type.room_type_id) === form.room_type_id)
+                  .map((type) => (
+                  <option key={type.room_type_id} value={type.room_type_id}>
+                    {type.name} - Capacidad {type.capacity} - {formatCurrency(type.base_price)}
+                  </option>
+                  ))}
               </select>
-            </label>
-            <label className="form-full">
-              Precio por noche
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={form.price}
-                onChange={(event) => setForm({ ...form, price: event.target.value })}
-                required
-              />
             </label>
             {!editing && (
               <p className="form-hint form-full">
-                Las habitaciones nuevas se registran como disponibles. El estado puede
-                cambiarse desde la tabla.
+                Las habitaciones nuevas usan la tarifa y capacidad del tipo seleccionado.
               </p>
             )}
             <div className="form-actions form-full">

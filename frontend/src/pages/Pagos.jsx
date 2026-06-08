@@ -229,6 +229,7 @@ function Pagos() {
             <div><span>Reserva</span><strong>#{summary.booking_id}</strong></div>
             <div><span>Cliente</span><strong>{summary.client_id}</strong></div>
             <div><span>Habitaciones</span><strong>{summary.room_numbers.join(", ")}</strong></div>
+            <div><span>Tipos</span><strong>{summary.room_types.join(", ")}</strong></div>
             <div><span>Metodo de pago</span><strong>{methodName(summary.payment_method_id)}</strong></div>
             <div className="invoice-total"><span>Total</span><strong>{formatCurrency(summary.total)}</strong></div>
           </div>

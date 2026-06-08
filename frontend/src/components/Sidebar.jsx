@@ -3,6 +3,7 @@ import { isAdminRole } from "../utils/auth";
 
 const links = [
   { to: "/dashboard", icon: "⌂", label: "Dashboard" },
+  { to: "/tipos-habitacion", icon: "◧", label: "Tipos habitacion", adminOnly: true },
   { to: "/habitaciones", icon: "▦", label: "Habitaciones" },
   { to: "/reservas", icon: "▤", label: "Reservas" },
   { to: "/clientes", icon: "◎", label: "Clientes" },
