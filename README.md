@@ -1,179 +1,288 @@
-# Sistema de reservaciones de hotel
+# HotelManager CR
 
-Este backend centraliza la gestion de clientes, habitaciones, reservaciones, facturacion y autenticacion de usuarios dentro de un sistema hotelero. La API fue desarrollada con FastAPI y se organiza en capas `api`, `application`, `domain` e `infrastructure`, con una separacion clara entre la exposicion HTTP, la logica del negocio y la persistencia.
+Sistema web universitario para la administracion de un hotel. Integra:
 
-Nota: actualmente este README documenta unicamente el backend ubicado en `server/`.
+- Frontend con React y Vite.
+- Backend con FastAPI.
+- Base de datos SQL Server.
+- Autenticacion con token.
+- Roles `ADMIN` y `EMPLOYEE`.
+- CRUD, reportes y graficos con datos reales.
 
-## Características
+## Que se debe compartir
 
-- El sistema permite administrar clientes a lo largo de su ciclo completo, desde el registro inicial hasta su consulta, actualizacion, eliminacion y listado general.
-- La gestion de habitaciones contempla su registro, consulta individual, actualizacion de datos, cambio de estado y visualizacion del inventario disponible.
-- La API puede filtrar habitaciones disponibles mediante el parametro `available=true`, lo que facilita su consulta operativa.
-- Las reservaciones pueden crearse, consultarse y actualizarse en sus fechas cuando ya existen en el sistema.
-- Cada cliente puede consultar su historial de reservaciones, lo que permite dar seguimiento a su actividad.
-- La facturacion se genera a partir de reservaciones existentes y puede consultarse tanto por identificador propio como por reservacion asociada.
-- El backend tambien expone un resumen de factura con datos vinculados del cliente, las habitaciones y el metodo de pago.
-- En el modulo de usuarios se incluye registro, inicio de sesion y cambio de contrasena.
-- Los errores de la aplicacion se devuelven mediante un formato JSON uniforme para mantener consistencia en la API.
-- Al iniciar, la aplicacion crea automaticamente las tablas registradas en el modelo de datos.
+Para probar el sistema en otra computadora se debe entregar:
 
-## Tecnologías Utilizadas
+- La carpeta completa del proyecto.
+- `docker-compose.yml`.
+- `server/.env.example`.
+- `frontend/.env`.
+- Este archivo `README.md`.
+- Un script SQL o respaldo de la base, solamente si se necesitan exactamente
+  los mismos clientes, habitaciones, reservas y facturas.
 
-- Python 3.13.
-- FastAPI.
-- Uvicorn.
-- SQLModel.
-- SQLAlchemy.
-- PyODBC.
-- Microsoft SQL Server mediante `mssql+pyodbc`.
-- bcrypt para hash y validacion de contrasenas.
-- `uv` para gestion de dependencias (`pyproject.toml` y `uv.lock`).
+No se recomienda publicar `server/.env`, porque contiene contrasenas y claves
+privadas. Cada integrante debe crear su propio archivo a partir de
+`.env.example`.
 
-## Arquitectura
+## Programas necesarios
 
-El proyecto sigue una base inspirada en Clean Architecture y distribuye sus responsabilidades por capas para mantener el codigo mas ordenado y predecible:
+Cada integrante debe instalar:
 
-- `api`: expone los endpoints HTTP y traduce errores a respuestas HTTP.
-- `application`: contiene DTOs y casos de uso que coordinan la logica de negocio.
-- `domain`: define entidades, excepciones y reglas de negocio.
-- `infrastructure`: implementa persistencia, modelos SQLModel, mapeos y repositorios.
+1. Docker Desktop.
+2. Node.js 18 o superior.
+3. Python 3.13.
+4. El administrador de paquetes `uv`.
+5. Microsoft ODBC Driver 18 for SQL Server.
 
-En terminos generales, una solicitud entra por una ruta HTTP, pasa a un caso de uso, se valida con reglas de negocio y finalmente interactua con los repositorios y la base de datos.
+Antes de continuar, Docker Desktop debe estar abierto y funcionando.
 
-## Estructura del Proyecto
+## Estructura esperada
+
+La terminal debe estar ubicada en la carpeta que contiene estos elementos:
 
 ```text
-backend-proy2-progra4/
-|-- server/
-|   |-- main.py
-|   |-- pyproject.toml
-|   |-- uv.lock
-|   |-- .env.example
-|   `-- src/
-|       |-- api/
-|       |   `-- routes/
-|       |-- application/
-|       |   |-- dtos/
-|       |   `-- uses_cases/
-|       |-- domain/
-|       |   |-- bussiness_rules/
-|       |   |-- entities/
-|       |   `-- exeptions.py
-|       `-- infrastructure/
-|           |-- database/
-|           |-- mappers/
-|           |-- models/
-|           `-- repositories/
-`-- .gitignore
+hotel-main/
+|-- docker-compose.yml
+|-- README.md
+|-- frontend/
+`-- server/
 ```
 
-- `server/main.py`: concentra el arranque de FastAPI, la configuracion de CORS y el manejo global de errores.
-- `server/src/api/routes/`: agrupa las rutas REST por modulo, separando clientes, habitaciones, reservaciones, facturas y autenticacion.
-- `server/src/application/dtos/`: define los modelos de entrada y salida con los que se comunica la API.
-- `server/src/application/uses_cases/`: coordina la logica de aplicacion y el flujo de cada operacion.
-- `server/src/domain/entities/`: representa las entidades principales del dominio hotelero.
-- `server/src/domain/bussiness_rules/`: concentra las validaciones y reglas del negocio.
-- `server/src/infrastructure/database/`: resuelve la conexion a la base de datos y la creacion de tablas.
-- `server/src/infrastructure/models/`: contiene los modelos persistentes construidos con SQLModel.
-- `server/src/infrastructure/repositories/`: encapsula el acceso a datos desde la capa de infraestructura.
-- `server/src/infrastructure/mappers/`: se encarga de convertir entre entidades de dominio y modelos persistentes.
+En este equipo, por ejemplo, la ruta es:
 
-## Instalación
-
-1. Clonar el repositorio:
-
-```bash
-git clone https://github.com/Danny019283/hotel
-cd backend-proy2-progra4
+```text
+C:\Users\morer\Downloads\hotel-main\hotel-main
 ```
 
-2. Entrar al directorio del backend:
+## Configurar el backend
 
-```bash
+Desde la raiz del proyecto, crear `server/.env`:
+
+```powershell
+Copy-Item server/.env.example server/.env
+```
+
+Abrir el archivo y configurar valores como estos:
+
+```env
+DB_SERVER=localhost,1433
+DB_NAME=hotel
+DB_USERNAME=SA
+DB_PASSWORD=HotelManagerCR_2026!
+DB_DRIVER=ODBC Driver 18 for SQL Server
+DB_TRUST_SERVER_CERTIFICATE=yes
+DB_ECHO=false
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+AUTH_SECRET=una_clave_privada_larga_para_el_equipo
+AUTH_TOKEN_TTL_SECONDS=28800
+INITIAL_ADMIN_USERNAME=admin
+INITIAL_ADMIN_PASSWORD=admin123
+```
+
+La contraseña de `DB_PASSWORD` debe ser fuerte y es la misma que Docker usara
+para SQL Server.
+
+## Configurar el frontend
+
+El archivo `frontend/.env` debe contener:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+## Iniciar el sistema con Docker
+
+Desde la carpeta que contiene `docker-compose.yml`:
+
+```powershell
+docker compose --env-file server/.env up --build -d
+docker compose --env-file server/.env ps
+```
+
+El resultado debe mostrar estos contenedores:
+
+- `hotel-sqlserver` en estado `healthy`.
+- `hotel-server` ejecutandose en `http://localhost:8000`.
+- `hotel-frontend` ejecutandose en `http://localhost:5173`.
+
+Docker crea automáticamente una base llamada `hotel`. Los datos se guardan en
+un volumen persistente, por lo que sobreviven al reinicio del contenedor.
+
+La API queda disponible en:
+
+- API: `http://localhost:8000`
+- Swagger: `http://localhost:8000/docs`
+
+El frontend queda disponible en:
+
+- App: `http://localhost:5173`
+
+## Iniciar solo el backend en local
+
+En la primera terminal:
+
+```powershell
 cd server
-```
-
-3. Instalar dependencias con `uv`:
-
-```bash
 uv sync
+uv run python -m uvicorn main:app --reload
 ```
 
-Nota: la URL exacta del repositorio no esta documentada en el proyecto y queda pendiente de agregar.
+La API quedara disponible en:
 
-## Configuración
+- API: `http://localhost:8000`
+- Swagger: `http://localhost:8000/docs`
 
-El backend toma su configuracion principal desde `server/.env`, y el proyecto incluye `server/.env.example` como referencia base para completar los valores necesarios.
+El backend crea las tablas y los datos iniciales al arrancar.
 
-Variables requeridas:
+## Iniciar solo el frontend en local
 
-- `DB_SERVER`: servidor de base de datos.
-- `DB_NAME`: nombre de la base de datos.
-- `DB_USERNAME`: usuario de base de datos.
-- `DB_PASSWORD`: contrasena de base de datos.
+Abrir una segunda terminal y ejecutar:
 
-Variables opcionales:
-
-- `DB_DRIVER`: driver ODBC. Valor por defecto: `ODBC Driver 17 for SQL Server`.
-- `DB_TRUST_SERVER_CERTIFICATE`: valor por defecto `yes`.
-- `DB_ECHO`: habilita logs SQL cuando vale `true`.
-- `ALLOWED_ORIGINS`: origenes permitidos por CORS separados por coma. Por defecto: `http://localhost:3000,http://localhost:5173`.
-
-Pasos recomendados:
-
-1. Crear `server/.env` a partir de `server/.env.example`.
-2. Configurar una instancia accesible de SQL Server.
-3. Verificar que el driver ODBC configurado exista en el entorno donde correra el backend.
-
-Nota: el proyecto no documenta configuraciones diferenciadas por ambiente y eso queda pendiente de documentar.
-
-## Ejecución
-
-Desde `server/`, ejecutar:
-
-```bash
-uv run uvicorn main:app --reload
+```powershell
+cd C:\ruta\del\proyecto\hotel-main\frontend
+npm install
+npm run dev
 ```
 
-Al iniciar, la aplicacion crea las tablas registradas en `SQLModel.metadata`, por lo que la estructura base de persistencia se prepara automaticamente.
+Abrir en el navegador:
 
-## API
+```text
+http://localhost:5173
+```
 
-Todos los endpoints se publican bajo el prefijo base `/api/v1`, organizados por contexto funcional.
+## Credenciales iniciales
 
-- Clientes: `POST /api/v1/clients`, `GET /api/v1/clients/{client_id}`, `PUT /api/v1/clients/{client_id}`, `DELETE /api/v1/clients/{client_id}`, `GET /api/v1/clients`.
-- Habitaciones: `POST /api/v1/rooms`, `GET /api/v1/rooms/{room_number}`, `PUT /api/v1/rooms/{room_number}`, `PATCH /api/v1/rooms/{room_number}/status`, `GET /api/v1/rooms`, `GET /api/v1/rooms?available=true`.
-- Reservaciones: `POST /api/v1/bookings`, `GET /api/v1/bookings/{booking_id}`, `PUT /api/v1/bookings/{booking_id}/dates`, `GET /api/v1/bookings/client/{client_id}/history`, `GET /api/v1/bookings`.
-- Facturas: `POST /api/v1/bills`, `GET /api/v1/bills/{bill_id}`, `GET /api/v1/bills/booking/{booking_id}`, `GET /api/v1/bills/{bill_id}/summary`.
-- Autenticacion: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `PUT /api/v1/auth/password`.
+```text
+Usuario: admin
+Contrasena: admin123
+Rol: ADMIN
+```
 
-Ademas, la aplicacion expone la documentacion automatica de FastAPI en `/docs` y `/redoc`, salvo que esa configuracion cambie en el futuro.
+El administrador puede crear usuarios con rol `EMPLOYEE` desde el modulo de
+usuarios.
 
-Nota: los cuerpos de peticion y ejemplos de respuesta aun no estan documentados manualmente en el proyecto.
+## Datos iniciales
 
-## Reglas de Negocio
+En una base nueva, el backend registra automáticamente:
 
-- Clientes: se exige que `client_id` tenga valor, que `name` y `last_name` no incluyan numeros, que `email` tenga un formato valido y que `phone` sea un entero positivo de exactamente 8 digitos.
-- Habitaciones: cada `room_number` debe ser positivo, `room_type` no puede estar vacio, `price` no puede ser negativo y al registrar una habitacion debe ser mayor que cero; para reservar, todas las habitaciones deben estar disponibles.
-- Reservaciones: siempre deben incluir al menos una habitacion, trabajar con un cliente existente y con habitaciones existentes; ademas, `check_in` no puede estar en el pasado, la estancia debe durar al menos una noche, `check_in` no puede ser mayor que `check_out` y no se permiten traslapes por habitacion.
-- Facturas: solo pueden generarse sobre una reservacion existente y con un metodo de pago existente y activo; ademas, solo puede existir una factura por reservacion, el total no puede ser negativo y debe coincidir con el calculo de la reservacion.
-- Usuarios: `username` debe tener valor y no contener espacios, la contrasena se almacena como hash con `bcrypt`, los roles validos son `ADMIN` y `EMPLOYEE`, y tanto el login como el cambio de contrasena verifican las credenciales contra el hash guardado.
+- El usuario administrador.
+- Efectivo.
+- Tarjeta.
+- Transferencia.
 
-## Base de Datos
+Los clientes, habitaciones, reservas y facturas se crean desde la interfaz.
 
-La persistencia se implementa con SQLModel sobre SQL Server. El proyecto registra directamente las siguientes tablas como base de su modelo de datos:
+## Compartir los mismos registros
 
-- `Clients`: almacena los datos principales de los clientes del sistema mediante los campos `client_id`, `name`, `last_name`, `phone` y `email`.
-- `Rooms`: conserva la informacion de las habitaciones a traves de `room_number`, `room_type`, `price` y `available`.
-- `Bookings`: registra las reservaciones con `booking_id`, `check_in`, `check_out` y `client_id`, permitiendo que un cliente tenga multiples reservaciones.
-- `Bookings_Rooms`: funciona como tabla intermedia entre reservaciones y habitaciones, guardando `booking_room_id`, `booking_id`, `room_number`, `price_per_night` y `subtotal`.
-- `Payment_methods`: describe los metodos de pago disponibles mediante `payment_method_id`, `name` y `active`.
-- `Bills`: guarda las facturas con `bill_id`, `booking_id`, `payment_method_id` y `total`; cada factura pertenece a una reservacion y a un metodo de pago, y `booking_id` es unico para evitar duplicados por reservacion.
-- `Users`: almacena los usuarios del backend con `username`, `password_hash` y `role`.
+Compartir solamente el código crea una base nueva y vacía para cada
+integrante. Para entregar también los mismos registros existen dos opciones:
 
-Relaciones generales:
+1. Ejecutar en cada computadora un script SQL con los datos de prueba.
+2. Restaurar un respaldo `.bak` de SQL Server.
 
-- `Clients` 1:N `Bookings`.
-- `Bookings` N:M `Rooms` mediante `Bookings_Rooms`.
-- `Bookings` 1:1 `Bills`.
-- `Payment_methods` 1:N `Bills`.
+Para este proyecto se recomienda un script SQL reproducible, porque también
+forma parte de los entregables solicitados para Bases de Datos.
+
+## Detener el sistema
+
+Si el sistema se levantó con Docker Compose, detener todo sin borrar datos:
+
+```powershell
+docker compose --env-file server/.env down
+```
+
+Si el backend y el frontend se levantaron manualmente, se detienen presionando
+`Ctrl + C` en sus terminales.
+
+No ejecutar lo siguiente si se desean conservar los datos:
+
+```powershell
+docker compose --env-file server/.env down -v
+```
+
+La opcion `-v` elimina el volumen de SQL Server.
+
+## Errores comunes
+
+### No encuentra `server/.env`
+
+La terminal está ubicada una carpeta arriba. Entrar primero a la carpeta que
+contiene `docker-compose.yml`:
+
+```powershell
+cd .\hotel-main
+```
+
+### PowerShell muestra `>>`
+
+PowerShell espera que se termine un comando incompleto. Presionar `Ctrl + C` y
+ejecutar cada comando por separado.
+
+### `Failed to spawn: uvicorn`
+
+Ejecutar el backend mediante Python:
+
+```powershell
+uv sync
+uv run python -m uvicorn main:app --reload
+```
+
+### El frontend no conecta con el backend
+
+Comprobar:
+
+- Que el backend siga abierto en otra terminal.
+- Que `http://localhost:8000/docs` responda.
+- Que `frontend/.env` use `VITE_API_URL=http://localhost:8000`.
+- Reiniciar `npm run dev` después de modificar `.env`.
+- Si se usa Docker Compose, ejecutar `docker compose --env-file server/.env ps`.
+
+### SQL Server no aparece como `healthy`
+
+Verificar que Docker Desktop esté abierto y consultar:
+
+```powershell
+docker compose --env-file server/.env ps
+docker logs hotel-sqlserver
+```
+
+## Verificacion del proyecto
+
+Frontend:
+
+```powershell
+cd frontend
+npm run lint
+npm run build
+```
+
+Backend:
+
+```powershell
+cd server
+uv run python -m compileall src main.py
+```
+
+## Tecnologias
+
+- React 18.
+- Vite.
+- Axios.
+- React Router DOM.
+- Recharts.
+- FastAPI.
+- SQLModel.
+- SQL Server 2022.
+- PyODBC.
+- bcrypt.
+- Docker Compose.
+
+## Consideraciones actuales
+
+El modelo existente no almacena capacidad de habitación, estado histórico de
+reserva, fecha propia de factura ni estado de pago. La interfaz utiliza
+solamente los campos que realmente se guardan en SQL Server.
+
+La disponibilidad de una habitación es global: crear una reserva la marca como
+no disponible y eliminar esa reserva vuelve a habilitarla.
