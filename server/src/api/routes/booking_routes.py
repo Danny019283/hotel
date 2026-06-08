@@ -3,7 +3,13 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from api.security import AuthenticatedUser, get_current_user
-from application.dtos.booking_dto import BookingHistoryItemDTO, BookingResponseDTO, CreateBookingDTO, UpdateBookingDatesDTO
+from application.dtos.booking_dto import (
+    BookingHistoryItemDTO,
+    BookingResponseDTO,
+    CreateBookingDTO,
+    OccupiedDateRangeDTO,
+    UpdateBookingDatesDTO,
+)
 from application.uses_cases.booking_cases import BookingCases
 from domain.exeptions import DomainError
 
@@ -23,6 +29,14 @@ def create_booking(dto: CreateBookingDTO, _: AuthenticatedUser = Depends(get_cur
 @router.get("/client/{client_id}/history", response_model=list[BookingHistoryItemDTO])
 def history_by_client(client_id: str, _: AuthenticatedUser = Depends(get_current_user)):
     return booking_cases.history_by_client_dto(client_id)
+
+
+@router.get("/rooms/{room_number}/occupied-ranges", response_model=list[OccupiedDateRangeDTO])
+def occupied_ranges_by_room(room_number: int, _: AuthenticatedUser = Depends(get_current_user)):
+    try:
+        return booking_cases.occupied_ranges_by_room_dto(room_number)
+    except DomainError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.get("", response_model=list[BookingResponseDTO])

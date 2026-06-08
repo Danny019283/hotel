@@ -33,14 +33,12 @@ function Dashboard() {
     if (!data) return null;
     const today = todayISO();
     const activeBookings = data.reservas.filter(
-      (booking) =>
-        booking.status !== "Cancelada" &&
-        booking.check_in <= today &&
-        booking.check_out >= today,
+      (booking) => booking.check_in <= today && booking.check_out > today,
     );
+    const roomStatus = buildRoomStatus(data.reservas, data.habitaciones, today);
     return {
-      available: data.habitaciones.filter((room) => room.available).length,
-      occupied: data.habitaciones.filter((room) => !room.available).length,
+      available: roomStatus[0]?.value || 0,
+      occupied: roomStatus[1]?.value || 0,
       activeBookings: activeBookings.length,
       revenue: data.pagos.reduce((sum, payment) => sum + Number(payment.total), 0),
     };
@@ -49,7 +47,7 @@ function Dashboard() {
   if (!data && !error) return <LoadingState />;
 
   const monthlyBookings = buildMonthlyBookings(data?.reservas || []);
-  const roomStatus = buildRoomStatus(data?.habitaciones || []);
+  const roomStatus = buildRoomStatus(data?.reservas || [], data?.habitaciones || [], todayISO());
   const recentBookings = [...(data?.reservas || [])]
     .sort((a, b) => b.booking_id - a.booking_id)
     .slice(0, 5);
@@ -67,8 +65,8 @@ function Dashboard() {
         <>
           <section className="stats-grid">
             <StatCard title="Habitaciones" value={data.habitaciones.length} subtitle="Inventario total" icon="H" />
-            <StatCard title="Disponibles" value={metrics.available} subtitle="Listas para reservar" icon="D" tone="gold" />
-            <StatCard title="Ocupadas" value={metrics.occupied} subtitle="Estado no disponible" icon="O" tone="slate" />
+            <StatCard title="Disponibles hoy" value={metrics.available} subtitle="Sin reservas activas" icon="D" tone="gold" />
+            <StatCard title="Ocupadas hoy" value={metrics.occupied} subtitle="Con estancias en curso" icon="O" tone="slate" />
             <StatCard title="Reservas activas" value={metrics.activeBookings} subtitle="Estancias de hoy" icon="R" tone="blue" />
             <StatCard title="Clientes" value={data.clientes.length} subtitle="Huespedes registrados" icon="C" />
             <StatCard title="Pagos" value={data.pagos.length} subtitle="Facturas encontradas" icon="P" tone="gold" />

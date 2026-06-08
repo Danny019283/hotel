@@ -115,16 +115,27 @@ function Usuarios() {
     {
       key: "actions",
       label: "Acciones",
-      render: (user) => (
-        <div className="table-actions">
-          <button className="button button-small button-secondary" onClick={() => openEdit(user)}>
-            Editar rol
-          </button>
-          <button className="button button-small button-danger" onClick={() => remove(user)}>
-            Eliminar
-          </button>
-        </div>
-      ),
+      render: (user) => {
+        const adminCount = users.filter((item) => item.role === "ADMIN").length;
+        const isCurrentUser = user.username === session.username;
+        const isProtectedAdmin = user.role === "ADMIN" && adminCount <= 1;
+
+        return (
+          <div className="table-actions">
+            {!isCurrentUser && !isProtectedAdmin && (
+              <button className="button button-small button-secondary" onClick={() => openEdit(user)}>
+                Editar rol
+              </button>
+            )}
+            {!isCurrentUser && !isProtectedAdmin && (
+              <button className="button button-small button-danger" onClick={() => remove(user)}>
+                Eliminar
+              </button>
+            )}
+            {(isCurrentUser || isProtectedAdmin) && <span className="muted">Sin acciones</span>}
+          </div>
+        );
+      },
     },
   ];
 
@@ -137,9 +148,6 @@ function Usuarios() {
         action={<button className="button button-primary" onClick={openCreate}>+ Nuevo usuario</button>}
       />
       <Alert type={feedback.type}>{feedback.message}</Alert>
-      <div className="scope-note">
-        Solo administradores pueden acceder. El backend impide eliminar al ultimo administrador.
-      </div>
       <article className="panel">
         {loading ? <LoadingState /> : <DataTable columns={columns} rows={users} rowKey="username" />}
       </article>

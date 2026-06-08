@@ -1,6 +1,12 @@
 from datetime import date
 
-from application.dtos.booking_dto import BookingHistoryItemDTO, BookingResponseDTO, CreateBookingDTO, UpdateBookingDatesDTO
+from application.dtos.booking_dto import (
+    BookingHistoryItemDTO,
+    BookingResponseDTO,
+    CreateBookingDTO,
+    OccupiedDateRangeDTO,
+    UpdateBookingDatesDTO,
+)
 from domain.bussiness_rules.booking_rules import BookingRules
 from domain.entities.booking import Booking
 from domain.exeptions import DomainError
@@ -39,6 +45,22 @@ class BookingCases:
             )
             BookingRules.validate_no_overlap(has_overlap, room_number)
 
+    def _has_bill(self, booking_id: int) -> bool:
+        return self.bill_repo.get_by_booking_id(booking_id) is not None
+
+    def _to_dto(self, booking: Booking) -> BookingResponseDTO:
+        has_bill = self._has_bill(booking.booking_id)
+        return BookingResponseDTO(
+            booking_id=booking.booking_id,
+            client_id=booking.client.client_id,
+            room_numbers=[room.room_number for room in booking.rooms],
+            check_in=booking.check_in,
+            check_out=booking.check_out,
+            has_bill=has_bill,
+            can_edit_dates=not has_bill,
+            can_delete=not has_bill,
+        )
+
     def create_booking(
         self,
         client_id: str,
@@ -67,33 +89,21 @@ class BookingCases:
 
     def create_booking_dto(self, dto: CreateBookingDTO) -> BookingResponseDTO:
         booking = self.create_booking(dto.client_id, dto.room_numbers, dto.check_in, dto.check_out)
-        return BookingResponseDTO(
-            booking_id=booking.booking_id,
-            client_id=booking.client.client_id,
-            room_numbers=[room.room_number for room in booking.rooms],
-            check_in=booking.check_in,
-            check_out=booking.check_out,
-        )
+        return self._to_dto(booking)
 
     def consult_booking(self, booking_id: int) -> Booking | None:
         return self.booking_repo.get_by_id(booking_id)
 
     def consult_booking_dto(self, booking_id: int) -> BookingResponseDTO | None:
         booking = self.consult_booking(booking_id)
-        if booking is None:
-            return None
-        return BookingResponseDTO(
-            booking_id=booking.booking_id,
-            client_id=booking.client.client_id,
-            room_numbers=[room.room_number for room in booking.rooms],
-            check_in=booking.check_in,
-            check_out=booking.check_out,
-        )
+        return self._to_dto(booking) if booking is not None else None
 
     def modify_booking_dates(self, booking_id: int, check_in: date, check_out: date) -> Booking:
         existing_booking = self.booking_repo.get_by_id(booking_id)
         if existing_booking is None:
             raise DomainError("booking not found")
+        if self._has_bill(booking_id):
+            raise DomainError("cannot edit dates for a booking that already has a bill")
 
         booking = Booking(
             existing_booking.booking_id,
@@ -116,13 +126,7 @@ class BookingCases:
 
     def modify_booking_dates_dto(self, booking_id: int, dto: UpdateBookingDatesDTO) -> BookingResponseDTO:
         booking = self.modify_booking_dates(booking_id, dto.check_in, dto.check_out)
-        return BookingResponseDTO(
-            booking_id=booking.booking_id,
-            client_id=booking.client.client_id,
-            room_numbers=[room.room_number for room in booking.rooms],
-            check_in=booking.check_in,
-            check_out=booking.check_out,
-        )
+        return self._to_dto(booking)
 
     def history_by_client(self, client_id: str) -> list[Booking]:
         bookings = self.booking_repo.get_all() or []
@@ -142,15 +146,15 @@ class BookingCases:
         ]
 
     def list_bookings_dto(self) -> list[BookingResponseDTO]:
+        return [self._to_dto(booking) for booking in (self.booking_repo.get_all() or [])]
+
+    def occupied_ranges_by_room_dto(self, room_number: int) -> list[OccupiedDateRangeDTO]:
+        room = self.room_repo.get_by_id(room_number)
+        if room is None:
+            raise DomainError("room not found")
         return [
-            BookingResponseDTO(
-                booking_id=booking.booking_id,
-                client_id=booking.client.client_id,
-                room_numbers=[room.room_number for room in booking.rooms],
-                check_in=booking.check_in,
-                check_out=booking.check_out,
-            )
-            for booking in (self.booking_repo.get_all() or [])
+            OccupiedDateRangeDTO(booking_id=booking_id, check_in=check_in, check_out=check_out)
+            for booking_id, check_in, check_out in self.booking_repo.occupied_ranges_for_room(room_number)
         ]
 
     def delete_booking(self, booking_id: int) -> None:

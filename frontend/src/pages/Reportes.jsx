@@ -42,7 +42,7 @@ function Reportes() {
       bookings: buildMonthlyBookings(data.reservas),
       roomTypes: buildBookingsByRoomType(data.reservas, data.habitaciones),
       revenue: buildMonthlyRevenue(data.pagos, data.reservas),
-      roomStatus: buildRoomStatus(data.habitaciones),
+      roomStatus: buildRoomStatus(data.reservas, data.habitaciones),
     };
   }, [data]);
 
@@ -94,7 +94,7 @@ function Reportes() {
 
           <article className="panel chart-panel">
             <div className="panel-heading">
-              <div><p className="eyebrow">Disponibilidad</p><h3>Estado de habitaciones</h3></div>
+              <div><p className="eyebrow">Disponibilidad</p><h3>Estado actual de habitaciones</h3></div>
             </div>
             {data.habitaciones.length ? (
               <>

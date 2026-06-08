@@ -27,3 +27,4 @@ class RoomTypeResponseDTO(BaseModel):
     capacity: int = Field(description="Maximum room capacity", examples=[2])
     base_price: float = Field(description="Base nightly price", examples=[150.0])
     active: bool = Field(description="Whether the room type is active")
+    can_delete: bool = Field(description="Whether the room type can be deleted")

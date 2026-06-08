@@ -4,15 +4,10 @@ from pydantic import BaseModel, Field
 class CreateRoomDTO(BaseModel):
     room_number: int = Field(gt=0, description="Room number", examples=[101])
     room_type_id: int = Field(gt=0, description="Room type identifier", examples=[1])
-    available: bool = Field(default=True, description="Whether the room is available for reservation")
 
 
 class UpdateRoomDTO(BaseModel):
     room_type_id: int = Field(gt=0, description="Room type identifier", examples=[1])
-
-
-class ChangeRoomStatusDTO(BaseModel):
-    available: bool = Field(description="Whether the room is available for reservation")
 
 
 class RoomResponseDTO(BaseModel):
@@ -23,4 +18,4 @@ class RoomResponseDTO(BaseModel):
     capacity: int = Field(description="Room type capacity", examples=[2])
     base_price: float = Field(description="Room base price per night", examples=[120.0])
     room_type_active: bool = Field(description="Whether the room type is active")
-    available: bool = Field(description="Whether the room is available for reservation")
+    can_delete: bool = Field(description="Whether the room can be deleted")

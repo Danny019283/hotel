@@ -3,7 +3,6 @@ import {
   createHabitacion,
   deleteHabitacion,
   getHabitaciones,
-  updateEstadoHabitacion,
   updateHabitacion,
 } from "../api/habitaciones.api";
 import { getApiError } from "../api/axiosConfig";
@@ -18,7 +17,6 @@ import { formatCurrency } from "../utils/formatters";
 const initialForm = {
   room_number: "",
   room_type_id: "",
-  available: true,
 };
 
 function Habitaciones() {
@@ -84,7 +82,6 @@ function Habitaciones() {
         await createHabitacion({
           room_number: Number(form.room_number),
           room_type_id: Number(form.room_type_id),
-          available: true,
         });
       }
       setModalOpen(false);
@@ -94,16 +91,6 @@ function Habitaciones() {
       setFeedback({ type: "error", message: getApiError(error) });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const toggleStatus = async (room) => {
-    try {
-      await updateEstadoHabitacion(room.room_number, !room.available);
-      setFeedback({ type: "success", message: "Estado actualizado correctamente." });
-      await loadRooms();
-    } catch (error) {
-      setFeedback({ type: "error", message: getApiError(error) });
     }
   };
 
@@ -133,27 +120,17 @@ function Habitaciones() {
       ),
     },
     {
-      key: "available",
-      label: "Habitacion",
-      render: (room) => (
-        <span className={`badge ${room.available ? "badge-success" : "badge-muted"}`}>
-          {room.available ? "Disponible" : "No disponible"}
-        </span>
-      ),
-    },
-    {
       key: "actions",
       label: "Acciones",
       render: (room) =>
         canManage ? (
           <div className="table-actions">
             <button className="button button-small button-secondary" onClick={() => openEdit(room)}>Editar</button>
-            <button className="button button-small button-ghost" onClick={() => toggleStatus(room)}>
-              {room.available ? "Bloquear" : "Habilitar"}
-            </button>
-            <button className="button button-small button-danger" onClick={() => remove(room)}>
-              Eliminar
-            </button>
+            {room.can_delete && (
+              <button className="button button-small button-danger" onClick={() => remove(room)}>
+                Eliminar
+              </button>
+            )}
           </div>
         ) : (
           <span className="muted">Solo lectura</span>
@@ -170,9 +147,6 @@ function Habitaciones() {
         action={canManage && <button className="button button-primary" onClick={openCreate}>+ Nueva habitacion</button>}
       />
       <Alert type={feedback.type}>{feedback.message}</Alert>
-      <div className="scope-note">
-        Los cambios se guardan en SQL Server. Una habitacion relacionada con reservas puede no ser eliminable.
-      </div>
       <article className="panel">
         {loading ? <LoadingState /> : <DataTable columns={columns} rows={rooms} rowKey="room_number" />}
       </article>
@@ -202,9 +176,9 @@ function Habitaciones() {
                 {roomTypes
                   .filter((type) => type.active || String(type.room_type_id) === form.room_type_id)
                   .map((type) => (
-                  <option key={type.room_type_id} value={type.room_type_id}>
-                    {type.name} - Capacidad {type.capacity} - {formatCurrency(type.base_price)}
-                  </option>
+                    <option key={type.room_type_id} value={type.room_type_id}>
+                      {type.name} - Capacidad {type.capacity} - {formatCurrency(type.base_price)}
+                    </option>
                   ))}
               </select>
             </label>

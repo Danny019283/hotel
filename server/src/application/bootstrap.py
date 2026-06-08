@@ -23,9 +23,9 @@ def seed_initial_data() -> None:
 
     room_type_repo = RoomType_repo()
     room_types = [
-        ("Suite", "Habitacion premium con amenidades ampliadas.", 4, "225.00"),
-        ("Doble", "Habitacion comoda para dos huespedes.", 2, "140.00"),
-        ("Individual", "Habitacion practica para una persona.", 1, "95.00"),
+        ("Suite", "Habitacion premium con amenidades ampliadas.", 4, "120000.00"),
+        ("Doble", "Habitacion comoda para dos huespedes.", 2, "85000.00"),
+        ("Individual", "Habitacion practica para una persona.", 1, "55000.00"),
     ]
     for name, description, capacity, base_price in room_types:
         if room_type_repo.get_by_name(name) is None:

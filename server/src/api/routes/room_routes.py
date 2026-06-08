@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from api.security import AuthenticatedUser, get_current_user, require_admin
-from application.dtos.room_dto import ChangeRoomStatusDTO, CreateRoomDTO, RoomResponseDTO, UpdateRoomDTO
+from application.dtos.room_dto import CreateRoomDTO, RoomResponseDTO, UpdateRoomDTO
 from application.uses_cases.room_cases import RoomCases
 from domain.exeptions import DomainError
 
@@ -34,25 +34,8 @@ def update_room(room_number: int, dto: UpdateRoomDTO, _: AuthenticatedUser = Dep
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
-@router.patch("/{room_number}/status", response_model=RoomResponseDTO)
-def change_room_status(
-    room_number: int,
-    dto: ChangeRoomStatusDTO,
-    _: AuthenticatedUser = Depends(require_admin),
-):
-    try:
-        return room_cases.change_room_status_dto(room_number, dto)
-    except DomainError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-
-
 @router.get("", response_model=list[RoomResponseDTO])
-def list_rooms(
-    available: bool | None = Query(default=None),
-    _: AuthenticatedUser = Depends(get_current_user),
-):
-    if available is True:
-        return room_cases.consult_available_rooms_dto()
+def list_rooms(_: AuthenticatedUser = Depends(get_current_user)):
     return room_cases.list_rooms_dto()
 
 

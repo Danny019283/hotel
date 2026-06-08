@@ -2,13 +2,7 @@ from decimal import Decimal
 from datetime import date
 
 from src.domain.entities.booking import Booking
-from src.domain.exeptions import (
-    BookingAvailabilityError,
-    BookingDatesError,
-    BookingOverlapError,
-    BookingPastDateError,
-    BookingStayError,
-)
+from src.domain.exeptions import BookingDatesError, BookingOverlapError, BookingPastDateError, BookingStayError
 
 
 class BookingRules:
@@ -34,12 +28,6 @@ class BookingRules:
             raise BookingPastDateError("check_in cannot be in the past")
 
     @staticmethod
-    def validate_rooms_available(rooms) -> None:
-        for room in rooms:
-            if not room.available:
-                raise BookingAvailabilityError("all rooms must be available")
-
-    @staticmethod
     def validate_no_overlap(has_overlap: bool, room_number: int) -> None:
         if has_overlap:
             raise BookingOverlapError(f"room {room_number} is already booked for the selected dates")
@@ -60,4 +48,3 @@ class BookingRules:
         BookingRules.validate_check_in_before_check_out(booking.check_in, booking.check_out)
         BookingRules.validate_minimum_stay(booking.check_in, booking.check_out)
         BookingRules.validate_not_in_past(booking.check_in)
-        BookingRules.validate_rooms_available(booking.rooms)

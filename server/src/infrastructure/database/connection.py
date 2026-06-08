@@ -48,7 +48,7 @@ DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 17 for SQL Server").strip()
 TRUST_SERVER_CERTIFICATE = os.getenv("DB_TRUST_SERVER_CERTIFICATE", "yes").strip()
 DB_ECHO = os.getenv("DB_ECHO", "false").strip().lower() == "true"
 DB_RESET_ON_START = os.getenv("DB_RESET_ON_START", "false").strip().lower() == "true"
-RESET_MARKER_PATH = Path(__file__).resolve().parents[3] / ".db_schema_reset_done"
+RESET_MARKER_PATH = Path(__file__).resolve().parents[3] / ".db_schema_reset_done_v2"
 
 connection_string = (
     f"DRIVER={{{DRIVER}}};"

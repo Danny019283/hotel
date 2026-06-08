@@ -11,7 +11,6 @@ class Room:
         capacity: int,
         base_price,
         room_type_active: bool,
-        available: bool,
     ):
         self.room_number = room_number
         self.room_type_id = room_type_id
@@ -20,7 +19,6 @@ class Room:
         self.capacity = capacity
         self.base_price = base_price
         self.room_type_active = room_type_active
-        self.available = available
 
     @property
     def room_number(self) -> int:
@@ -104,13 +102,3 @@ class Room:
         if not isinstance(value, bool):
             raise TypeError("room_type_active must be a bool")
         self.__room_type_active = value
-
-    @property
-    def available(self) -> bool:
-        return self.__available
-
-    @available.setter
-    def available(self, value: bool):
-        if not isinstance(value, bool):
-            raise TypeError("available must be a bool")
-        self.__available = value

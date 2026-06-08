@@ -5,6 +5,7 @@ import { getHabitaciones } from "../api/habitaciones.api";
 import {
   createReserva,
   deleteReserva,
+  getFechasOcupadasPorHabitacion,
   getReservas,
   updateFechasReserva,
 } from "../api/reservas.api";
@@ -12,7 +13,7 @@ import DataTable from "../components/DataTable";
 import { Alert, LoadingState } from "../components/Feedback";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
-import { formatDate, todayISO } from "../utils/formatters";
+import { formatCurrency, formatDate, todayISO } from "../utils/formatters";
 
 const initialForm = {
   client_id: "",
@@ -20,6 +21,9 @@ const initialForm = {
   check_in: "",
   check_out: "",
 };
+
+const rangesOverlap = (checkIn, checkOut, range) =>
+  Boolean(checkIn && checkOut) && checkIn < range.check_out && checkOut > range.check_in;
 
 const getBookingStatus = (booking) => {
   const today = todayISO();
@@ -38,6 +42,7 @@ function Reservas() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [occupiedRanges, setOccupiedRanges] = useState({});
 
   const loadData = async () => {
     try {
@@ -60,6 +65,30 @@ function Reservas() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!modalOpen || editing || form.room_numbers.length === 0) {
+      setOccupiedRanges({});
+      return;
+    }
+
+    const loadOccupiedRanges = async () => {
+      try {
+        const entries = await Promise.all(
+          form.room_numbers.map(async (roomNumber) => [roomNumber, await getFechasOcupadasPorHabitacion(roomNumber)]),
+        );
+        setOccupiedRanges(Object.fromEntries(entries));
+      } catch (error) {
+        setFeedback({ type: "error", message: getApiError(error) });
+      }
+    };
+
+    loadOccupiedRanges();
+  }, [modalOpen, editing, form.room_numbers]);
+
+  const selectedOverlaps = Object.values(occupiedRanges)
+    .flat()
+    .some((range) => rangesOverlap(form.check_in, form.check_out, range));
 
   const openCreate = () => {
     setEditing(null);
@@ -91,6 +120,10 @@ function Reservas() {
     }
     if (!editing && form.check_in < todayISO()) {
       setFeedback({ type: "error", message: "La fecha de entrada no puede estar en el pasado." });
+      return;
+    }
+    if (!editing && selectedOverlaps) {
+      setFeedback({ type: "error", message: "Una o mas habitaciones seleccionadas ya estan ocupadas en ese rango." });
       return;
     }
 
@@ -130,8 +163,10 @@ function Reservas() {
     }
   };
 
-  const updateRoomSelection = (event) => {
-    const selected = Array.from(event.target.selectedOptions, (option) => Number(option.value));
+  const toggleRoomSelection = (roomNumber) => {
+    const selected = form.room_numbers.includes(roomNumber)
+      ? form.room_numbers.filter((value) => value !== roomNumber)
+      : [...form.room_numbers, roomNumber];
     setForm({ ...form, room_numbers: selected });
   };
 
@@ -159,12 +194,17 @@ function Reservas() {
       label: "Acciones",
       render: (booking) => (
         <div className="table-actions">
-          <button className="button button-small button-secondary" onClick={() => openEdit(booking)}>
-            Editar fechas
-          </button>
-          <button className="button button-small button-danger" onClick={() => remove(booking)}>
-            Eliminar
-          </button>
+          {booking.can_edit_dates && (
+            <button className="button button-small button-secondary" onClick={() => openEdit(booking)}>
+              Editar fechas
+            </button>
+          )}
+          {booking.can_delete && (
+            <button className="button button-small button-danger" onClick={() => remove(booking)}>
+              Eliminar
+            </button>
+          )}
+          {!booking.can_edit_dates && !booking.can_delete && <span className="muted">Sin acciones</span>}
         </div>
       ),
     },
@@ -179,9 +219,6 @@ function Reservas() {
         action={<button className="button button-primary" onClick={openCreate}>+ Nueva reserva</button>}
       />
       <Alert type={feedback.type}>{feedback.message}</Alert>
-      <div className="scope-note">
-        El estado se calcula con las fechas. Las reservas facturadas no pueden eliminarse.
-      </div>
       <article className="panel">
         {loading ? <LoadingState /> : <DataTable columns={columns} rows={bookings} rowKey="booking_id" />}
       </article>
@@ -207,29 +244,32 @@ function Reservas() {
             </label>
             <label>
               Habitaciones
-              <select
-                multiple
-                className="multi-select"
-                disabled={Boolean(editing)}
-                value={form.room_numbers.map(String)}
-                onChange={updateRoomSelection}
-                required
-              >
-                {rooms
-                  .filter((room) => room.available || form.room_numbers.includes(room.room_number))
-                  .map((room) => (
-                    <option key={room.room_number} value={room.room_number}>
-                      #{room.room_number} - {room.room_type_name}
-                    </option>
-                  ))}
-              </select>
-              {!editing && <small>Usa Ctrl para seleccionar varias.</small>}
+              <div className={`room-picker ${editing ? "room-picker-disabled" : ""}`}>
+                {rooms.map((room) => {
+                  const selected = form.room_numbers.includes(room.room_number);
+                  return (
+                    <button
+                      key={room.room_number}
+                      type="button"
+                      className={`room-chip ${selected ? "room-chip-selected" : ""}`}
+                      onClick={() => toggleRoomSelection(room.room_number)}
+                      disabled={Boolean(editing)}
+                    >
+                      <strong>#{room.room_number}</strong>
+                      <span>{room.room_type_name}</span>
+                      <small>Capacidad {room.capacity} · {formatCurrency(room.base_price)}</small>
+                    </button>
+                  );
+                })}
+              </div>
+              {!editing && <small>Selecciona una o varias habitaciones para la misma estancia.</small>}
             </label>
             <label>
               Fecha de entrada
               <input
                 type="date"
                 min={editing ? undefined : todayISO()}
+                className={!editing && selectedOverlaps ? "input-error" : ""}
                 value={form.check_in}
                 onChange={(event) => setForm({ ...form, check_in: event.target.value })}
                 required
@@ -240,11 +280,43 @@ function Reservas() {
               <input
                 type="date"
                 min={form.check_in || todayISO()}
+                className={!editing && selectedOverlaps ? "input-error" : ""}
                 value={form.check_out}
                 onChange={(event) => setForm({ ...form, check_out: event.target.value })}
                 required
               />
             </label>
+            {!editing && form.room_numbers.length > 0 && (
+              <div className="form-full occupancy-panel">
+                <div className="occupancy-header">
+                  <strong>Fechas ocupadas</strong>
+                </div>
+                <div className="occupancy-grid">
+                  {form.room_numbers.map((roomNumber) => {
+                    const ranges = occupiedRanges[roomNumber] || [];
+                    return (
+                      <div key={roomNumber} className="occupancy-card">
+                        <h4>Habitacion #{roomNumber}</h4>
+                        {ranges.length === 0 ? (
+                          <p className="occupancy-empty">Sin reservas registradas.</p>
+                        ) : (
+                          <div className="occupancy-ranges">
+                            {ranges.map((range) => (
+                              <span
+                                key={`${roomNumber}-${range.booking_id}-${range.check_in}`}
+                                className={`occupancy-range ${rangesOverlap(form.check_in, form.check_out, range) ? "occupancy-range-conflict" : ""}`}
+                              >
+                                {formatDate(range.check_in)} a {formatDate(range.check_out)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="form-actions form-full">
               <button type="button" className="button button-ghost" onClick={() => setModalOpen(false)}>Cancelar</button>
               <button className="button button-primary" disabled={saving}>{saving ? "Guardando..." : "Guardar reserva"}</button>

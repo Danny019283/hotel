@@ -19,6 +19,7 @@ class RoomTypeCases:
         self.room_repo = room_repo or Room_repo()
 
     def _to_dto(self, room_type: RoomType) -> RoomTypeResponseDTO:
+        rooms = self.room_repo.get_all() or []
         return RoomTypeResponseDTO(
             room_type_id=room_type.room_type_id,
             name=room_type.name,
@@ -26,6 +27,7 @@ class RoomTypeCases:
             capacity=room_type.capacity,
             base_price=float(room_type.base_price),
             active=room_type.active,
+            can_delete=not any(room.room_type_id == room_type.room_type_id for room in rooms),
         )
 
     def create_room_type(self, name: str, description: str, capacity: int, base_price: float, active: bool) -> RoomType:

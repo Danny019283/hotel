@@ -138,7 +138,9 @@ function TiposHabitacion() {
           <button className="button button-small button-ghost" onClick={() => toggleStatus(roomType)}>
             {roomType.active ? "Desactivar" : "Activar"}
           </button>
-          <button className="button button-small button-danger" onClick={() => remove(roomType)}>Eliminar</button>
+          {roomType.can_delete && (
+            <button className="button button-small button-danger" onClick={() => remove(roomType)}>Eliminar</button>
+          )}
         </div>
       ),
     },
@@ -153,9 +155,6 @@ function TiposHabitacion() {
         action={<button className="button button-primary" onClick={openCreate}>+ Nuevo tipo</button>}
       />
       <Alert type={feedback.type}>{feedback.message}</Alert>
-      <div className="scope-note">
-        Solo administradores pueden modificar este catalogo. Los tipos asignados a habitaciones no se pueden eliminar.
-      </div>
       <article className="panel">
         {loading ? <LoadingState /> : <DataTable columns={columns} rows={roomTypes} rowKey="room_type_id" />}
       </article>

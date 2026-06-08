@@ -168,9 +168,6 @@ function Pagos() {
         action={<button className="button button-primary" onClick={openCreate}>+ Generar factura</button>}
       />
       <Alert type={feedback.type}>{feedback.message}</Alert>
-      <div className="scope-note">
-        El total se calcula en el backend según habitaciones y noches. No se ingresa manualmente.
-      </div>
       <section className="stats-grid stats-compact">
         <StatCard title="Facturas" value={payments.length} subtitle="Registros persistidos" icon="F" />
         <StatCard title="Ingresos totales" value={formatCurrency(total)} subtitle="Suma de facturas" icon="$" tone="gold" />

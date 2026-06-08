@@ -32,6 +32,15 @@ class BookingResponseDTO(BaseModel):
     room_numbers: list[int] = Field(description="Reserved room numbers", examples=[[101, 102]])
     check_in: date = Field(description="Check-in date", examples=["2026-06-10"])
     check_out: date = Field(description="Check-out date", examples=["2026-06-12"])
+    has_bill: bool = Field(description="Whether the booking already has a bill")
+    can_edit_dates: bool = Field(description="Whether booking dates can be edited")
+    can_delete: bool = Field(description="Whether the booking can be deleted")
+
+
+class OccupiedDateRangeDTO(BaseModel):
+    booking_id: int = Field(description="Booking identifier", examples=[1])
+    check_in: date = Field(description="Check-in date", examples=["2026-06-10"])
+    check_out: date = Field(description="Check-out date", examples=["2026-06-12"])
 
 
 class BookingHistoryItemDTO(BaseModel):

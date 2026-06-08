@@ -20,3 +20,8 @@ export const getHistorialCliente = (clientId) =>
   api
     .get(`${BASE}/client/${clientId}/history`)
     .then((response) => response.data);
+
+export const getFechasOcupadasPorHabitacion = (roomNumber) =>
+  api
+    .get(`${BASE}/rooms/${roomNumber}/occupied-ranges`)
+    .then((response) => response.data);

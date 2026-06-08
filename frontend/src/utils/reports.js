@@ -20,10 +20,20 @@ export const buildMonthlyBookings = (bookings) => {
     }));
 };
 
-export const buildRoomStatus = (rooms) => [
-  { name: "Disponibles", value: rooms.filter((room) => room.available).length },
-  { name: "Ocupadas", value: rooms.filter((room) => !room.available).length },
-];
+export const buildRoomStatus = (bookings, rooms, today = new Date().toISOString().slice(0, 10)) => {
+  const occupiedRooms = new Set();
+
+  bookings.forEach((booking) => {
+    if (booking.check_in <= today && booking.check_out > today) {
+      booking.room_numbers.forEach((roomNumber) => occupiedRooms.add(roomNumber));
+    }
+  });
+
+  return [
+    { name: "Disponibles hoy", value: rooms.length - occupiedRooms.size },
+    { name: "Ocupadas hoy", value: occupiedRooms.size },
+  ];
+};
 
 export const buildBookingsByRoomType = (bookings, rooms) => {
   const roomTypes = new Map(rooms.map((room) => [room.room_number, room.room_type_name]));

@@ -1,13 +1,8 @@
 from src.domain.entities.room import Room
-from src.domain.exeptions import RoomAvailabilityError, RoomPriceError, RoomTypeError
+from src.domain.exeptions import RoomPriceError, RoomTypeError
 
 
 class RoomRules:
-    @staticmethod
-    def validate_available(room: Room) -> None:
-        if not room.available:
-            raise RoomAvailabilityError("room is not available")
-
     @staticmethod
     def validate_price(room: Room) -> None:
         if room.base_price <= 0:

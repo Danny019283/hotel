@@ -82,7 +82,6 @@ class MapperModel:
             capacity=room_type_model.capacity,
             base_price=booked_price if booked_price is not None else room_type_model.base_price,
             room_type_active=room_type_model.active,
-            available=model.available,
         )
 
     @staticmethod
@@ -90,7 +89,6 @@ class MapperModel:
         return Room_model(
             room_number=entity.room_number,
             room_type_id=entity.room_type_id,
-            available=entity.available,
         )
 
     @staticmethod
