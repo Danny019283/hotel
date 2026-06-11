@@ -11,29 +11,32 @@ Sistema web universitario para la administracion de un hotel. Integra:
 
 ## Que se debe compartir
 
-Para probar el sistema en otra computadora se debe entregar:
+Para probar el sistema en otra computadora con Docker Compose se debe entregar:
 
 - La carpeta completa del proyecto.
 - `docker-compose.yml`.
 - `server/.env.example`.
-- `frontend/.env`.
 - Este archivo `README.md`.
 - Un script SQL o respaldo de la base, solamente si se necesitan exactamente
   los mismos clientes, habitaciones, reservas y facturas.
 
 No se recomienda publicar `server/.env`, porque contiene contrasenas y claves
 privadas. Cada integrante debe crear su propio archivo a partir de
-`.env.example`.
+`server/.env.example`.
+
+`frontend/.env` no es obligatorio para Docker Compose en este proyecto, porque
+el frontend ya usa `http://localhost:8000` por defecto. Solo hace falta si se
+desea cambiar la URL de la API.
 
 ## Programas necesarios
 
-Cada integrante debe instalar:
+Para levantar todo con Docker Compose, cada integrante debe instalar:
 
 1. Docker Desktop.
-2. Node.js 18 o superior.
-3. Python 3.13.
-4. El administrador de paquetes `uv`.
-5. Microsoft ODBC Driver 18 for SQL Server.
+2. Git.
+
+Node.js, Python, `uv` y Microsoft ODBC Driver 18 for SQL Server solo se
+necesitan para ejecutar el frontend o el backend fuera de Docker.
 
 Antes de continuar, Docker Desktop debe estar abierto y funcionando.
 
@@ -73,6 +76,7 @@ DB_PASSWORD=HotelManagerCR_2026!
 DB_DRIVER=ODBC Driver 18 for SQL Server
 DB_TRUST_SERVER_CERTIFICATE=yes
 DB_ECHO=false
+DB_RESET_ON_START=false
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 AUTH_SECRET=una_clave_privada_larga_para_el_equipo
 AUTH_TOKEN_TTL_SECONDS=28800
@@ -85,11 +89,15 @@ para SQL Server.
 
 ## Configurar el frontend
 
-El archivo `frontend/.env` debe contener:
+Si se desea definir explícitamente la URL del backend, el archivo
+`frontend/.env` puede contener:
 
 ```env
 VITE_API_URL=http://localhost:8000
 ```
+
+Si no existe `frontend/.env`, el frontend usa `http://localhost:8000`
+automáticamente.
 
 ## Iniciar el sistema con Docker
 
